@@ -6,8 +6,6 @@ using System.Threading.Tasks;
 using System.Diagnostics; // класс Stopwatch
 using System.Threading;
 using System.IO;
-using System.Text.RegularExpressions;
-
 
 namespace CrossinformTestWork
 {
@@ -18,7 +16,6 @@ namespace CrossinformTestWork
             // Создаем объект для подсчёта времени выполнения программы
             Stopwatch time = new Stopwatch();
             // Запускаем секундомер
-            
 
             // Получаем путь к файлу из аргументов командной строки
             //if (args.Length < 1)
@@ -27,12 +24,13 @@ namespace CrossinformTestWork
             //    return;
             //}
             //string path = args[0];
-            string path = "data/avidreaders.ru__prestuplenie-i-nakazanie-dr-izd.txt";
+            string path = "data/big text.txt";
 
             string text;
+            // Получаем весь текст из файла
+            // Если не удалось прочитать файл, выводим сообщение об ошибке и завершаем программу
             try
             {
-                // Получаем весь текст из файла
                 text = ReadFile(path).ToLower();
             }
             catch (Exception e)
@@ -41,60 +39,91 @@ namespace CrossinformTestWork
                 return;
             }
 
-            time.Start();
-
-            Regex regex = new Regex(@"[а-я]{3}");
-            MatchCollection words = regex.Matches(text);
-
-            //string[] words = matches.Cast<Match>().ToArray();
-            //string[] words = matches.Cast<Match>().Select(m => m.Value).ToArray();
-
-            // Отчищаем текст от лишних символов
-            //text = ClearText(text);
-
-            //// Разбиваем текст на слова
-            //string[] words = text.Split(' ');
-
-            //// Удаляем слова, длина которых меньше 3х букв
-            //List<string> wordsList = new List<string>();
-            //for (int i = 0; i < words.Length; i++)
-            //{
-            //    if (words[i].Length >= 3)
-            //        wordsList.Add(words[i]);
-            //}
-
-            //// Преобразуем список обратно в массив
-            //words = wordsList.ToArray();
-            //wordsList = null;
-
-            //string[] words = text.Split(' ');
-
-            // Создаём словарь, для хранения частоты встречаемсости триплетов
+            // Список для хранения результатов запуска алгоритма подсчета триплетов
+            List<double> measurements = new List<double>();
+            // Число экспериментов
+            int measurementsCount = 5;
+            // Словарь для хранения частоты встречаемости триплетов
             Dictionary<string, int> triplets = new Dictionary<string, int>();
-
-            // Подсчёт частоты встречаемости триплетов
-            foreach (var word in words)
+            // Проводим серию запусков работы алгоритма для подсчёта среднего времени работы
+            for (int t = 0; t < measurementsCount; t++)
             {
-                int index = 0;
-                string word2 = word.ToString();
-                while (index <= word2.Length - 3)
-                {
-                    string wordPart = word2.Substring(index, 3);
+                time.Start();
 
-                    // Увеличение счетчика
-                    if (triplets.ContainsKey(wordPart))
-                    {
-                        triplets[wordPart]++;
-                    } 
-                    else
-                    {
-                        triplets[wordPart] = 1;
-                    }
-                    index++;
-                }
+                // Создаём словарь, для хранения частоты встречаемсости триплетов
+                triplets = TextAnalyzer.FrequencyAnalysis(text);
+
+                // Останавливаем секундомер
+                time.Stop();
+
+                // Выводим в консоль время работы программы в миллисекундах
+                Console.WriteLine(time.Elapsed.TotalMilliseconds);
+
+                measurements.Add(time.Elapsed.TotalMilliseconds);
+                time.Reset();
             }
 
             // Вывод результата работы программы
+            int k = 0;
+            foreach (var pair in triplets.OrderByDescending(pair => pair.Value))
+            {
+                k++;
+                if (k == 10)
+                {
+                    Console.Write("{0}", pair.Key);
+                    break;
+                }
+                else
+                {
+                    Console.Write("{0}, ", pair.Key);
+                }
+            }
+            Console.WriteLine("");
+
+            double meanTime = 0;
+            foreach (var j in measurements)
+            {
+                meanTime += j;
+            }
+
+            Console.WriteLine("Среднее время вычисления после n запусков:");
+            Console.WriteLine(meanTime / measurementsCount);
+
+            Console.ReadKey();
+        }
+
+        static void Main2(string[] args)
+        {
+            // Создаем объект для подсчёта времени выполнения программы
+            Stopwatch time = new Stopwatch();
+            // Запускаем секундомер
+            time.Start();
+
+            //Получаем путь к файлу из аргументов командной строки
+            if (args.Length < 1)
+            {
+                Console.WriteLine("Отсутствует путь к файлу!");
+                return;
+            }
+            string path = args[0];
+
+            string text;
+            // Получаем весь текст из файла
+            // Если не удалось прочитать файл, выводим сообщение об ошибке и завершаем программу
+            try
+            {
+                text = ReadFile(path).ToLower();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                return;
+            }
+
+            // Вычисляем частоты встречаемости триплетов
+            Dictionary<string, int> triplets = TextAnalyzer.FrequencyAnalysis(text);
+
+            // Выводим 10 самых часто встречаемых триплета
             int k = 0;
             foreach (var pair in triplets.OrderByDescending(pair => pair.Value))
             {
@@ -129,21 +158,6 @@ namespace CrossinformTestWork
                 // Возвращаем все содержимое файла
                 return sr.ReadToEnd();
             }
-        }
-
-        // Отчистить текст от символов перевода строки и символов пунктуации
-        static string ClearText(string text)
-        {
-            
-            text = text.ToLower();
-            text = text.Replace("-", " ");
-
-            // Удаление всех знаков препинания
-            text = Regex.Replace(text, @"[\.\,\:\;\!\?«»*–…\[\]()\d\n\r]", "");
-
-            text = text.Replace(" - ", "");
-
-            return text;
         }
     }
 }
