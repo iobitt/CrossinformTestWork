@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Threading;
 using System.Text.RegularExpressions;
 
@@ -16,22 +13,19 @@ namespace CrossinformTestWork
             // Переводим текст в нижний регистр
             text = text.ToLower();
 
-            // Заменяем знак - на пробел, чтобы получить два отдельных слова
-            text = text.Replace("-", " ");
-            // Удаляем все знаки препинания, символы перевода строки, другие лишние символы
-            text = Regex.Replace(text, @"[\.\,\:\;\!\?«»*–…\[\]()\d\n\r]", "");
-
+            // Заменяем символы перевода строк на пробел
+            text = Regex.Replace(text, @"[\n\r\-\–]", " ");
+            // Удаляем все знаки препинания и другие лишние символы
+            text = Regex.Replace(text, @"[\.\,\:\;\!\?«»*…\[\]()\d]", "");
+            
             // Разбиваем текст на слова
             string[] words = text.Split(' ');
 
             // Создаём словарь, для хранения частоты встречаемсости триплетов
             Dictionary<string, int> triplets = new Dictionary<string, int>();
 
-            // Высчитываем количество потоков в зависимости от количества слов
-            // int threadCount = ((int)words.Length / 100000) + 1;
             // Устанавливаем количество потоков равное количеству ядер процессора
             int threadCount = Environment.ProcessorCount;
-            Console.WriteLine(threadCount);
             // Количество слов на 1 поток
             int wordsPerStream = (int) words.Length / threadCount;
 
@@ -44,7 +38,7 @@ namespace CrossinformTestWork
             for (int i = 0; i < threadCount; i++)
             {
                 // Количество слов для работы конкретному потоку
-                // Последнему потому отдаем все оставшиеся слова
+                // Последнему потоку отдаем все оставшиеся слова
                 int wordsCount;
                 if (i == threadCount - 1)
                     wordsCount = words.Length - wordsPerStream * (i);
@@ -52,7 +46,7 @@ namespace CrossinformTestWork
                     wordsCount = wordsPerStream;
 
                 // Создаем объект для подсчёта триплетов
-                TripletsCounter counter = new TripletsCounter(new ArraySegment<String>(words, wordsPerStream * i, wordsCount), triplets, i.ToString());
+                TripletsCounter counter = new TripletsCounter(new ArraySegment<String>(words, wordsPerStream * i, wordsCount));
                 // Добавляем счетчик в список
                 tripletsCounters.Add(counter);
 

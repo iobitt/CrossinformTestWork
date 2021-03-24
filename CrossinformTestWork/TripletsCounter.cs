@@ -1,23 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CrossinformTestWork
 {
     // Класс для подсчёта триплетов в массиве слов
     public class TripletsCounter
     {
+        // Границы фрагмента массива слов
         private ArraySegment<string> words;
+        // Словарь частоты встречаемости триплетов
         private Dictionary<string, int> triplets;
-        private string name;
 
-        public TripletsCounter(ArraySegment<string> words, Dictionary<string, int> triplets, string name)
+        public TripletsCounter(ArraySegment<string> words)
         {
             this.words = words;
             this.triplets = new Dictionary<string, int>();
-            this.name = name;
         }
 
         public Dictionary<string, int> GetTriplets()
@@ -28,18 +25,19 @@ namespace CrossinformTestWork
         // Посчитать триплеты в массиве слов
         public void Count()
         {
-            Console.WriteLine("{0} начал работу", name);
-
+            // Проходим по массиву слов
             foreach (var word in words)
             {
-                if (word.Length < 3)
-                    continue;
-
+                // Проходим по всем триплетам слова
+                // Для слов, длина которых меньше 3, цикл выполняться не будет
                 int index = 0;
                 while (index <= word.Length - 3)
                 {
+                    // Вырезаем триплет из слова
                     string wordPart = word.Substring(index, 3);
-
+                    
+                    // Увеличиваем счетчик встречаемости триплета
+                    // Если счетчика нет, создаем его
                     if (triplets.ContainsKey(wordPart))
                         triplets[wordPart]++;
                     else
@@ -48,8 +46,6 @@ namespace CrossinformTestWork
                     index++;
                 }
             }
-
-            Console.WriteLine("{0} завершил работу", name);
         }
     }
 }
